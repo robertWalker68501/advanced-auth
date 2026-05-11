@@ -7,7 +7,9 @@ import {
   Public_Sans,
   JetBrains_Mono,
 } from 'next/font/google';
+
 import './globals.css';
+import { Toaster } from '@/components/ui/sonner';
 import { cn } from '@/lib/utils';
 
 const jetbrainsMonoHeading = JetBrains_Mono({
@@ -49,7 +51,10 @@ export default function RootLayout({
         jetbrainsMonoHeading.variable
       )}
     >
-      <body className='dark'>{children}</body>
+      <body className='dark'>
+        {children}
+        <Toaster />
+      </body>
     </html>
   );
 }

@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
-
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { Controller, useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import * as z from 'zod';
 
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,7 @@ import {
   FieldLabel,
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { authClient } from '@/lib/auth-client';
 
 const signUpSchema = z.object({
   name: z.string().min(1),
@@ -25,7 +26,7 @@ const signUpSchema = z.object({
 type SignUpForm = z.infer<typeof signUpSchema>;
 
 const SignUpTab = () => {
-  const [loading, setLoading] = useState<boolean>(false);
+  const router = useRouter();
 
   const form = useForm<SignUpForm>({
     resolver: zodResolver(signUpSchema),
@@ -36,8 +37,21 @@ const SignUpTab = () => {
     },
   });
 
+  const { isSubmitting } = form.formState;
+
   const onSubmit = async (data: SignUpForm) => {
-    console.log(data);
+    await authClient.signUp.email(
+      { ...data },
+      {
+        onSuccess: () => {
+          toast.success('Sign was successful');
+          router.push('/');
+        },
+        onError: (error) => {
+          toast.error(error.error.message || 'Failed to sign up');
+        },
+      }
+    );
   };
 
   return (
@@ -93,6 +107,7 @@ const SignUpTab = () => {
               <FieldLabel htmlFor='sign-up-form-password'>Password</FieldLabel>
               <Input
                 {...field}
+                type='password'
                 id='sign-up-form-password'
                 aria-invalid={fieldState.invalid}
                 placeholder='********'
@@ -110,10 +125,10 @@ const SignUpTab = () => {
         <Button
           type='submit'
           form='sign-up-form'
-          disabled={loading}
+          disabled={isSubmitting}
           className='w-full'
         >
-          {loading ? <Loader2 /> : 'Sign Up'}
+          {isSubmitting ? <Loader2 /> : 'Sign Up'}
         </Button>
       </Field>
     </form>

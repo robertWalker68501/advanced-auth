@@ -1,9 +1,13 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { Controller, useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import * as z from 'zod';
 
+import { Button } from '@/components/ui/button';
 import {
   Field,
   FieldError,
@@ -11,6 +15,7 @@ import {
   FieldLabel,
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { authClient } from '@/lib/auth-client';
 
 const signInSchema = z.object({
   email: z.email().min(1),
@@ -20,6 +25,8 @@ const signInSchema = z.object({
 type SignInForm = z.infer<typeof signInSchema>;
 
 const SignInTab = () => {
+  const router = useRouter();
+
   const form = useForm<SignInForm>({
     resolver: zodResolver(signInSchema),
     defaultValues: {
@@ -28,11 +35,26 @@ const SignInTab = () => {
     },
   });
 
-  const onSubmit = async (data: SignInForm) => {};
+  const { isSubmitting } = form.formState;
+
+  const onSubmit = async (data: SignInForm) => {
+    await authClient.signIn.email(
+      { ...data },
+      {
+        onSuccess: () => {
+          toast.success('Sign in was successful');
+          router.push('/');
+        },
+        onError: (error) => {
+          toast.error(error.error.message || 'Failed to sign in');
+        },
+      }
+    );
+  };
 
   return (
     <form
-      id='sign-up-form'
+      id='sign-in-form'
       onSubmit={form.handleSubmit(onSubmit)}
       className='max-w-lg'
     >
@@ -63,6 +85,7 @@ const SignInTab = () => {
               <FieldLabel htmlFor='sign-up-form-password'>Password</FieldLabel>
               <Input
                 {...field}
+                type='password'
                 id='sign-up-form-password'
                 aria-invalid={fieldState.invalid}
                 placeholder='********'
@@ -73,6 +96,19 @@ const SignInTab = () => {
           )}
         />
       </FieldGroup>
+      <Field
+        orientation='horizontal'
+        className='mt-5'
+      >
+        <Button
+          type='submit'
+          form='sign-in-form'
+          disabled={isSubmitting}
+          className='w-full'
+        >
+          {isSubmitting ? <Loader2 /> : 'Sign In'}
+        </Button>
+      </Field>
     </form>
   );
 };
